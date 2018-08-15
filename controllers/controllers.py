@@ -17,16 +17,18 @@ class OAuthLogin(Home):
         # 获取所有的OAuth服务商
         providers = super(OAuthLogin, self).list_providers()
         for provider in providers:
-            # provider['auth_endpoint']是
+            # provider['auth_endpoint']获取的就是身份验证网址
+            # 服务商的相关字段信息可以在数据库结构中搜索模型auth就可以找到了
             if 'weixin' in provider['auth_endpoint']:
                 # 构造微信请求参数
                 params = dict(
                     response_type='code',
-                    appid=APPID,  # 你也可以通过provider[]获得，前提是你配置在服务商
-                    redirect_uri='http://erp.mobookapp.com/wechat/',
+                    appid=APPID,  # 你也可以通过provider['client_id']获得，前提是你在界面配置过
+                    redirect_uri='http://你的域名/wechat/',  # 微信回调处理url，后面的wechat是我自己添加的，可改
                     scope=provider['scope'],
-                    state=str(provider['id'])
+                    state=str(provider['id'])  # 我这里把服务商id放在这个参数中
                 )
+                # 最终的微信登入请求链接
                 provider['auth_link'] = "{}?{}#wechat_redirect".format(provider['auth_endpoint'], url_encode(params))
         return providers
 
@@ -44,6 +46,7 @@ class OAuthController(Controller):
         openid = token_info['openid']
         # 换取用户信息
         user_info = self.get_userinfo(token_info['access_token'], openid)
+        
         print(user_info)
         city = user_info['province'] + " " + user_info['city']
         # 验证核心函数，返回数据库中用户id
@@ -56,7 +59,7 @@ class OAuthController(Controller):
                 "name": user_info['nickname'],   # 用户名，不可重复
                 "oauth_provider_id": provider_id,  # 服务商id，可选
                 "city": city,  # 可选，还可添加其他参数，这里就不列举了
-                # 将该用户添加到门户组, 如果是员工登入就不要设置"groups_id"
+                # 将该用户添加到门户组, 如果是员工登入就不设置"groups_id"
                 "groups_id": request.env.ref('base.group_portal'),
             })
             # 待解决：因为新用户第一次验证不成功，第二次再扫的时候就可以，
