@@ -24,7 +24,7 @@ class OAuthLogin(Home):
                 params = dict(
                     response_type='code',
                     appid=APPID,  # 你也可以通过provider['client_id']获得，前提是你在界面配置过
-                    redirect_uri='http://你的域名/wechat/',  # 微信回调处理url，后面的wechat是我自己添加的，可改
+                    redirect_uri='http://你的域名/wechat/',  # 微信回调处理url，后面的wechat是我自己添加的，可改，但要与下面的路径一致
                     scope=provider['scope'],
                     state=str(provider['id'])  # 我这里把服务商id放在这个参数中
                 )
@@ -34,6 +34,7 @@ class OAuthLogin(Home):
 
 
 class OAuthController(Controller):
+    # 此处的路径'/wechat/'与上面所填的redirect_uri要一致
     @http.route('/wechat/', type='http', auth='none')
     def login(self, **kwargs):
         # OAuth提供商id
